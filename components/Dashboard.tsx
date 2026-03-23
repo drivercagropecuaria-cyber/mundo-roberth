@@ -74,8 +74,8 @@ function StatCard({ label, value, icon, accent }: { label: string; value: number
   </div>;
 }
 
-function Card({ children, style = {}, className = "" }: { children: React.ReactNode; style?: React.CSSProperties; className?: string }) {
-  return <div className={className} style={{ background: V.card, border: "1px solid " + V.line, borderRadius: V.radius, padding: 22, boxShadow: V.shadow, ...style }}>{children}</div>;
+function Card({ children, style = {}, className = "", id }: { children: React.ReactNode; style?: React.CSSProperties; className?: string; id?: string }) {
+  return <div id={id} className={className} style={{ background: V.card, border: "1px solid " + V.line, borderRadius: V.radius, padding: 22, boxShadow: V.shadow, ...style }}>{children}</div>;
 }
 
 // SWOT COMPONENT
