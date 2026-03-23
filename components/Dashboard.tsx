@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { rpc } from "@/lib/supabase";
+import ResearchDossier from "@/components/ResearchDossier";
 
 // ============================================================
 // TYPES
@@ -404,7 +405,7 @@ export default function Dashboard() {
         {/* RESEARCH */}
         {tab === "research" && (
           selectedReport
-            ? <ResearchDocument report={selectedReport} onBack={() => setSelectedReport(null)} />
+            ? <ResearchDossier report={selectedReport} onBack={() => setSelectedReport(null)} />
             : <ResearchList reports={research} onSelect={setSelectedReport} />
         )}
 
@@ -494,3 +495,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
