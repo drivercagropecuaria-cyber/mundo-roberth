@@ -21,6 +21,8 @@ interface RSource { title: string; url: string; source_platform: string; relevan
 interface RConflict { conflict_point: string; source_a: string; source_b: string; explanation: string; impact_on_conclusion: string; }
 interface DossierSrc { title: string; url: string; key_claim: string; fills_gap: string; }
 interface DossierData { id: string; title: string; status: string; executive_summary: string|null; overview: string|null; context_history: string|null; current_state: string|null; detailed_analysis: string|null; perspectives: any; key_findings: any; convergences: any; divergences: any; gaps_limitations: string|null; practical_implications: string|null; strategic_dimensions: string|null; future_trends: string|null; conclusion: string|null; confidence: string|null; confidence_why: string|null; sources_analyzed: number; new_sources_found: number; vertentes_covered: number; coverage_score: any; processing_log: any; swot_analysis?: any; created_at: string; updated_at: string; original_research: any; original_sources: any; new_sources: DossierSrc[]; }
+interface PresentSection { id: string; type: string; title: string; icon: string; content: string|null; items: any[]; }
+interface PresentData { id: string; title: string; subtitle: string|null; status: string; hero_section: any; table_of_contents: any; executive_summary: string|null; sections: PresentSection[]; highlights: any[]; news_links: any[]; sources_panel: any[]; timeline_data: any; conclusion: string|null; footer_meta: any; swot_visual: any; total_sections: number; total_sources: number; theme: string; language: string; generated_at: string|null; created_at: string; dossier_info: any; }
 interface RReport { id: string; topic: string; summary: string|null; executive_summary: string|null; main_answer: string|null; full_report: string|null; conflicts: string|null; timeline: string|null; next_searches: string|null; sources_count: number; status: string; mode: string|null; confidence: string|null; search_contract: any; self_evaluation: any; created_at: string; sources: RSource[]|null; conflict_details: RConflict[]|null; swot_analysis?: any; }
 
 // ============================================================
@@ -335,6 +337,7 @@ const tabs = [
   { id: "overview", label: "Vis\u00e3o Geral", icon: "\u26a1" },
   { id: "research", label: "Pesquisas", icon: "\ud83d\udd0d" },
   { id: "dossiers", label: "Dossi\u00eas", icon: "\ud83d\udcda" },
+  { id: "presentations", label: "Apresenta\u00e7\u00f5es", icon: "\ud83d\udcca" },
   { id: "jobs", label: "Jobs", icon: "\ud83d\udd04" },
   { id: "tasks", label: "Tarefas", icon: "\ud83d\udccb" },
   { id: "calendar", label: "Calend\u00e1rio", icon: "\ud83d\udcc5" },
@@ -356,6 +359,9 @@ export default function Dashboard() {
   const [dossiers, setDossiers] = useState<DossierData[]>([]);
   const [selDossier, setSelDossier] = useState<DossierData | null>(null);
   const [genLoading, setGenLoading] = useState<string | null>(null);
+  const [presentations, setPresentations] = useState<PresentData[]>([]);
+  const [selPresentation, setSelPresentation] = useState<PresentData | null>(null);
+  const [presLoading, setPresLoading] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [lastUp, setLastUp] = useState<Date | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -363,8 +369,8 @@ export default function Dashboard() {
 
   const fetchAll = useCallback(async () => {
     try { setPulse(true);
-      const [s, j, t, e, a, rr, dd] = await Promise.all([rpc<DashboardStats>("get_dashboard_stats"), rpc<Job[]>("get_recent_jobs", { p_limit: 20 }), rpc<Task[]>("get_all_tasks"), rpc<CalEvent[]>("get_all_calendar_events"), rpc<AuditEvent[]>("get_recent_events", { p_limit: 30 }), rpc<RReport[]>("get_all_research_reports"), rpc<DossierData[]>("get_all_dossiers")]);
-      setStats(s); setJobs(j || []); setTasks(t || []); setEvents(e || []); setAudit(a || []); setResearch(rr || []); setDossiers(dd || []); setLastUp(new Date()); setErr(null);
+      const [s, j, t, e, a, rr, dd, pp] = await Promise.all([rpc<DashboardStats>("get_dashboard_stats"), rpc<Job[]>("get_recent_jobs", { p_limit: 20 }), rpc<Task[]>("get_all_tasks"), rpc<CalEvent[]>("get_all_calendar_events"), rpc<AuditEvent[]>("get_recent_events", { p_limit: 30 }), rpc<RReport[]>("get_all_research_reports"), rpc<DossierData[]>("get_all_dossiers"), rpc<PresentData[]>("get_all_presentations")]);
+      setStats(s); setJobs(j || []); setTasks(t || []); setEvents(e || []); setAudit(a || []); setResearch(rr || []); setDossiers(dd || []); setPresentations(pp || []); setLastUp(new Date()); setErr(null);
     } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
     finally { setLoading(false); setTimeout(() => setPulse(false), 600); }
   }, []);
@@ -395,7 +401,7 @@ export default function Dashboard() {
 
     {/* NAV */}
     <nav className="no-print" style={{ position: "relative", zIndex: 10, padding: "0 32px", display: "flex", gap: 4, borderBottom: "1px solid rgba(255,255,255,0.04)", overflowX: "auto" }}>
-      {tabs.map(t => <button key={t.id} onClick={() => { setTab(t.id); setSelReport(null); setSelDossier(null); }} style={{ padding: "14px 18px", background: "none", border: "none", cursor: "pointer", color: tab === t.id ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: tab === t.id ? 700 : 500, borderBottom: tab === t.id ? "2px solid #7c9cff" : "2px solid transparent", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
+      {tabs.map(t => <button key={t.id} onClick={() => { setTab(t.id); setSelReport(null); setSelDossier(null); setSelPresentation(null); }} style={{ padding: "14px 18px", background: "none", border: "none", cursor: "pointer", color: tab === t.id ? "#fff" : "rgba(255,255,255,0.35)", fontSize: 13, fontWeight: tab === t.id ? 700 : 500, borderBottom: tab === t.id ? "2px solid #7c9cff" : "2px solid transparent", display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap" }}>
         <span>{t.icon}</span> {t.label}
         {t.id === "research" && research.length > 0 && <span style={{ background: "rgba(124,156,255,0.2)", color: "#7c9cff", fontSize: 10, fontWeight: 800, padding: "1px 7px", borderRadius: 10, marginLeft: 2 }}>{research.length}</span>}
       </button>)}
@@ -597,6 +603,224 @@ export default function Dashboard() {
       ))}
 
       {/* JOBS */}
+      {/* PRESENTATIONS TAB */}
+      {tab === "presentations" && (selPresentation ? (
+        <div style={{ animation: "slideIn 0.4s ease" }} className="presentation-view">
+          <style>{`@media print { .no-print { display: none !important; } .presentation-view { padding: 0 !important; } .print-break { page-break-before: always; } }`}</style>
+          <button className="no-print" onClick={() => setSelPresentation(null)} style={{ background: "rgba(255,255,255,0.06)", border: "1px solid " + V.line, borderRadius: 14, padding: "10px 16px", color: V.muted, cursor: "pointer", fontSize: 13, fontWeight: 600, marginBottom: 20 }}>&larr; Voltar</button>
+
+          {/* HERO */}
+          {selPresentation.hero_section && <div style={{ border: "1px solid rgba(255,200,107,0.2)", background: "linear-gradient(135deg, rgba(255,200,107,0.06), rgba(124,156,255,0.04))", borderRadius: 28, padding: "48px 40px", boxShadow: V.shadow, marginBottom: 24, position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", right: -60, top: -60, width: 300, height: 300, borderRadius: 999, background: "radial-gradient(circle, rgba(255,200,107,0.15), transparent 65%)", pointerEvents: "none" }} />
+            <div style={{ position: "relative", zIndex: 1 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+                {(selPresentation.hero_section.badges || []).map((b: string, i: number) => <span key={i} style={{ padding: "6px 12px", borderRadius: 999, background: "rgba(255,200,107,0.12)", border: "1px solid rgba(255,200,107,0.3)", color: "#ffc86b", fontSize: 12, fontWeight: 700 }}>{b}</span>)}
+              </div>
+              <h1 style={{ fontSize: "clamp(28px, 4vw, 48px)", fontWeight: 900, letterSpacing: "-0.03em", margin: "0 0 14px", lineHeight: 1.15 }}>{selPresentation.title}</h1>
+              <p style={{ color: V.muted, fontSize: 17, maxWidth: 800, margin: "0 0 20px", lineHeight: 1.7 }}>{selPresentation.hero_section.summary || selPresentation.subtitle}</p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+                {selPresentation.hero_section.sources_count && <span style={{ padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid " + V.line, borderRadius: 999, color: V.muted, fontSize: 14 }}>{"\ud83d\udcca"} {selPresentation.hero_section.sources_count} fontes</span>}
+                {selPresentation.hero_section.confidence && <span style={{ padding: "10px 14px", background: "rgba(255,255,255,0.05)", border: "1px solid " + V.line, borderRadius: 999, color: V.muted, fontSize: 14 }}>{selPresentation.hero_section.confidence === "alto" ? "\ud83d\udfe2" : "\ud83d\udfe1"} Confian\u00e7a: {selPresentation.hero_section.confidence}</span>}
+              </div>
+              <div className="no-print" style={{ marginTop: 20 }}>
+                <button onClick={() => window.print()} style={{ border: "none", cursor: "pointer", padding: "12px 18px", borderRadius: 14, fontWeight: 700, fontSize: 14, background: "linear-gradient(135deg, #ffc86b, " + V.accent2 + ")", color: "#08101e" }}>{"\ud83d\udcc4"} Baixar PDF</button>
+              </div>
+            </div>
+          </div>}
+
+          {/* HIGHLIGHTS */}
+          {selPresentation.highlights && selPresentation.highlights.length > 0 && <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 14, marginBottom: 24 }}>
+            {selPresentation.highlights.map((h: any, i: number) => <Card key={i} style={{ textAlign: "center", padding: 20 }}>
+              <div style={{ fontSize: 28 }}>{h.icon || "\ud83d\udccc"}</div>
+              <div style={{ fontSize: 28, fontWeight: 800, margin: "8px 0 4px" }}>{h.value}</div>
+              <div style={{ fontSize: 12, color: V.muted }}>{h.label}</div>
+            </Card>)}
+          </div>}
+
+          {/* TOC */}
+          {selPresentation.table_of_contents && selPresentation.table_of_contents.length > 0 && <Card className="no-print" style={{ marginBottom: 24 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 14px" }}>{"\ud83d\udcd1"} Sum\u00e1rio</h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {selPresentation.table_of_contents.map((item: any, i: number) => <a key={i} href={"#" + item.id} style={{ padding: "8px 14px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid " + V.line, color: V.muted, fontSize: 13, textDecoration: "none" }}>{item.icon || ""} {item.title}</a>)}
+            </div>
+          </Card>}
+
+          {/* EXECUTIVE SUMMARY */}
+          {selPresentation.executive_summary && <Card style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{"\ud83d\udcdd"} Resumo Executivo</h2>
+            <div style={{ color: V.muted, lineHeight: 1.8, fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 15 }} dangerouslySetInnerHTML={{ __html: mdHtml(selPresentation.executive_summary) }} />
+          </Card>}
+
+          {/* DYNAMIC SECTIONS */}
+          {(selPresentation.sections || []).map((sec: any, i: number) => {
+            const sectionStyle = { marginBottom: 24 };
+            if (sec.type === "narrative") return <Card key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || ""} {sec.title}</h2>
+              <div style={{ color: V.muted, lineHeight: 1.8, fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 15 }} dangerouslySetInnerHTML={{ __html: mdHtml(sec.content || "") }} />
+            </Card>;
+
+            if (sec.type === "cards") return <div key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || ""} {sec.title}</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 14 }}>
+                {(sec.items || []).map((item: any, j: number) => <Card key={j}>
+                  {item.badge && <span style={{ display: "inline-block", padding: "4px 10px", borderRadius: 999, background: "rgba(124,156,255,0.12)", color: V.accent, fontSize: 11, fontWeight: 700, marginBottom: 10 }}>{item.badge}</span>}
+                  <h3 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 8px" }}>{item.title}</h3>
+                  <p style={{ color: V.muted, fontSize: 13, lineHeight: 1.6, margin: 0 }}>{item.content}</p>
+                </Card>)}
+              </div>
+            </div>;
+
+            if (sec.type === "timeline") return <Card key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || "\u23f3"} {sec.title}</h2>
+              {(sec.items || []).map((item: any, j: number) => <div key={j} style={{ display: "flex", gap: 16, padding: "14px 0", borderBottom: j < (sec.items || []).length - 1 ? "1px solid " + V.line : "none" }}>
+                <div style={{ minWidth: 100, color: V.accent2, fontWeight: 700, fontSize: 13 }}>{item.title || item.date}</div>
+                <div><div style={{ fontWeight: 600 }}>{item.badge || item.event || ""}</div><div style={{ color: V.muted, fontSize: 13 }}>{item.content || item.detail || ""}</div></div>
+              </div>)}
+            </Card>;
+
+            if (sec.type === "highlights") return <div key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || ""} {sec.title}</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 14 }}>
+                {(sec.items || []).map((item: any, j: number) => <Card key={j} style={{ borderLeft: "4px solid " + V.accent2 }}>
+                  <div style={{ fontWeight: 800, fontSize: 22 }}>{item.title}</div>
+                  <div style={{ color: V.muted, fontSize: 13 }}>{item.content}</div>
+                </Card>)}
+              </div>
+            </div>;
+
+            if (sec.type === "quote") return <div key={i} id={sec.id} style={{ ...sectionStyle, padding: "24px 28px", borderLeft: "4px solid " + V.warning, background: "rgba(255,200,107,0.06)", borderRadius: 18 }}>
+              <div style={{ fontSize: 32, color: V.warning, lineHeight: 1 }}>{"\u201c"}</div>
+              <div style={{ fontSize: 17, fontStyle: "italic", lineHeight: 1.7, color: V.text, margin: "8px 0" }}>{sec.content}</div>
+              {sec.title && <div style={{ color: V.muted, fontSize: 13 }}>\u2014 {sec.title}</div>}
+            </div>;
+
+            if (sec.type === "comparison") return <Card key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || ""} {sec.title}</h2>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                {(sec.items || []).map((item: any, j: number) => <div key={j} style={{ padding: 16, borderRadius: 14, border: "1px solid " + V.line, background: "rgba(255,255,255,0.03)" }}>
+                  <h4 style={{ fontWeight: 700, marginBottom: 6 }}>{item.title}</h4>
+                  <p style={{ color: V.muted, fontSize: 13, margin: 0 }}>{item.content}</p>
+                </div>)}
+              </div>
+            </Card>;
+
+            if (sec.type === "news_panel") return <Card key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || "\ud83d\udcf0"} {sec.title}</h2>
+              {(sec.items || []).map((item: any, j: number) => <div key={j} style={{ padding: "12px 0", borderBottom: "1px solid " + V.line }}>
+                <div style={{ fontWeight: 600 }}>{item.url ? <a href={item.url} target="_blank" rel="noopener" style={{ color: V.accent, textDecoration: "underline" }}>{item.title} {"\u2197"}</a> : item.title}</div>
+                {item.content && <div style={{ color: V.muted, fontSize: 13, marginTop: 4 }}>{item.content}</div>}
+              </div>)}
+            </Card>;
+
+            if (sec.type === "table") return <Card key={i} id={sec.id} style={{ ...sectionStyle, padding: 0, overflow: "hidden" }}>
+              <div style={{ padding: "16px 22px", borderBottom: "1px solid " + V.line }}><h2 style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>{sec.icon || ""} {sec.title}</h2></div>
+              <div style={{ overflowX: "auto" }}>
+                {(sec.items || []).map((item: any, j: number) => <div key={j} style={{ display: "flex", justifyContent: "space-between", padding: "12px 22px", borderBottom: "1px solid " + V.line }}>
+                  <span style={{ fontWeight: 600 }}>{item.title}</span>
+                  <span style={{ color: V.muted }}>{item.content}</span>
+                </div>)}
+              </div>
+            </Card>;
+
+            // Default: narrative fallback
+            return <Card key={i} id={sec.id} style={sectionStyle}>
+              <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{sec.icon || ""} {sec.title}</h2>
+              <div style={{ color: V.muted, lineHeight: 1.8, fontSize: 15 }} dangerouslySetInnerHTML={{ __html: mdHtml(sec.content || "") }} />
+              {sec.items && sec.items.length > 0 && sec.items.map((item: any, j: number) => <div key={j} style={{ padding: "10px 0", borderBottom: "1px solid " + V.line }}><strong>{item.title}</strong><div style={{ color: V.muted, fontSize: 13 }}>{item.content}</div></div>)}
+            </Card>;
+          })}
+
+          {/* SWOT */}
+          <SwotSection swot={selPresentation.swot_visual} />
+
+          {/* SOURCES */}
+          {selPresentation.sources_panel && selPresentation.sources_panel.length > 0 && <Card style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{"\ud83d\udd17"} Fontes e Refer\u00eancias ({selPresentation.sources_panel.length})</h2>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", gap: 10 }}>
+              {selPresentation.sources_panel.map((s: any, i: number) => <div key={i} style={{ padding: "12px 14px", borderRadius: 14, border: "1px solid " + V.line, background: "rgba(255,255,255,0.03)" }}>
+                <div style={{ fontWeight: 600, fontSize: 13 }}>{s.url ? <a href={s.url} target="_blank" rel="noopener" style={{ color: V.accent }}>{(s.title || "").substring(0, 60)} {"\u2197"}</a> : (s.title || "").substring(0, 60)}</div>
+                <div style={{ color: V.muted, fontSize: 11, marginTop: 4 }}>{s.type || ""} \u2022 {s.strength || ""}</div>
+              </div>)}
+            </div>
+          </Card>}
+
+          {/* CONCLUSION */}
+          {selPresentation.conclusion && <Card style={{ marginBottom: 24, border: "1px solid rgba(78,227,193,0.2)", background: "linear-gradient(180deg, rgba(78,227,193,0.04), rgba(255,255,255,0.03))" }}>
+            <h2 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px", color: V.accent2 }}>{"\u2705"} Conclus\u00e3o</h2>
+            <div style={{ color: V.muted, lineHeight: 1.8, fontFamily: "'Source Serif 4', Georgia, serif", fontSize: 15 }} dangerouslySetInnerHTML={{ __html: mdHtml(selPresentation.conclusion) }} />
+          </Card>}
+
+          {/* FOOTER */}
+          <div style={{ background: "rgba(255,200,107,0.04)", border: "1px solid rgba(255,200,107,0.15)", borderRadius: 20, padding: "18px 20px", color: V.muted, fontSize: 14, marginBottom: 40 }}>
+            <strong>Apresenta\u00e7\u00e3o gerada em {fmtDateLong(selPresentation.generated_at || selPresentation.created_at)}</strong>
+            <p style={{ margin: "8px 0 0" }}>Dossi\u00ea: {selPresentation.dossier_info?.title || selPresentation.title} | {selPresentation.total_sections} se\u00e7\u00f5es | {selPresentation.total_sources} fontes | Mundo Roberth</p>
+          </div>
+        </div>
+      ) : (
+        /* PRESENTATION LIST */
+        <div style={{ animation: "slideIn 0.4s ease" }}>
+          <div style={{ marginBottom: 24 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 800, margin: "0 0 8px" }}>{"\ud83d\udcca"} Apresenta\u00e7\u00f5es Documentais</h2>
+            <p style={{ color: V.muted, fontSize: 14, margin: 0 }}>Transforme dossi\u00eas em apresenta\u00e7\u00f5es HTML interativas e exportáveis em PDF.</p>
+          </div>
+
+          {presentations.length > 0 && <div style={{ marginBottom: 32 }}>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: V.warning, marginBottom: 14, textTransform: "uppercase", letterSpacing: 1 }}>Apresenta\u00e7\u00f5es Geradas</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+              {presentations.map((p, i) => <div key={p.id} onClick={() => p.status === "completed" && setSelPresentation(p)}
+                style={{ background: V.card, border: "1px solid rgba(255,200,107,0.15)", borderRadius: 18, padding: "24px 26px", cursor: p.status === "completed" ? "pointer" : "default", transition: "all 0.3s", animation: "slideIn 0.4s ease " + (i * 0.06) + "s both" }}
+                onMouseEnter={e => { if (p.status === "completed") { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,200,107,0.35)"; (e.currentTarget as HTMLElement).style.transform = "translateY(-3px)"; }}}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,200,107,0.15)"; (e.currentTarget as HTMLElement).style.transform = ""; }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}><SBadge s={p.status} /><span style={{ fontSize: 11, color: V.muted }}>{timeAgo(p.created_at)}</span></div>
+                <h3 style={{ fontSize: 16, fontWeight: 800, margin: "0 0 8px" }}>{p.title}</h3>
+                <p style={{ fontSize: 12.5, color: V.muted, lineHeight: 1.6, margin: "0 0 12px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{p.subtitle || ""}</p>
+                <div style={{ display: "flex", gap: 14, fontSize: 11, color: V.muted }}>
+                  <span>{p.total_sections} se\u00e7\u00f5es</span>
+                  <span>{p.total_sources} fontes</span>
+                  {p.status === "completed" && <span style={{ color: "#ffc86b", fontWeight: 600 }}>Abrir {"\u2192"}</span>}
+                </div>
+              </div>)}
+            </div>
+          </div>}
+
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: V.accent2, marginBottom: 14, textTransform: "uppercase", letterSpacing: 1 }}>Dossi\u00eas Dispon\u00edveis</h3>
+          {dossiers.filter(d => d.status === "completed").length === 0 ? (
+            <div style={{ padding: 60, textAlign: "center", color: "rgba(255,255,255,0.2)" }}><div style={{ fontSize: 56, marginBottom: 16 }}>{"\ud83d\udcda"}</div><div style={{ fontSize: 16, fontWeight: 700 }}>Nenhum dossi\u00ea conclu\u00eddo</div><div style={{ fontSize: 13, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>Gere um dossi\u00ea na aba Dossi\u00eas primeiro</div></div>
+          ) : (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: 16 }}>
+              {dossiers.filter(d => d.status === "completed").map((d, i) => {
+                const hasPres = presentations.find(p => p.dossier_info?.id === d.id);
+                const isGen = presLoading === d.id;
+                return <div key={d.id} style={{ background: V.card, border: "1px solid " + V.line, borderRadius: 18, padding: "24px 26px", animation: "slideIn 0.4s ease " + (i * 0.06) + "s both" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 10 }}>
+                    <span style={{ fontSize: 11, color: V.muted }}>{"\ud83d\udcda"} Dossi\u00ea | {d.sources_analyzed} fontes</span>
+                    <span style={{ fontSize: 11, color: V.muted }}>{timeAgo(d.created_at)}</span>
+                  </div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, margin: "0 0 8px" }}>{d.title}</h3>
+                  <p style={{ fontSize: 12, color: V.muted, lineHeight: 1.5, margin: "0 0 14px", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>{(d.executive_summary || "").replace(/[#*]/g, "").substring(0, 120)}</p>
+                  {hasPres ? (
+                    <button onClick={() => setSelPresentation(hasPres)} style={{ background: "rgba(255,200,107,0.1)", border: "1px solid rgba(255,200,107,0.3)", borderRadius: 12, padding: "10px 16px", color: "#ffc86b", cursor: "pointer", fontSize: 13, fontWeight: 700, width: "100%" }}>Ver Apresenta\u00e7\u00e3o {"\u2192"}</button>
+                  ) : (
+                    <button disabled={isGen} onClick={async () => {
+                      setPresLoading(d.id);
+                      try {
+                        await fetch("https://umwqxkggzrpwknptwwju.supabase.co/functions/v1/presentation-agent", {
+                          method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVtd3F4a2dnenJwd2tucHR3d2p1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3NzUyNjgsImV4cCI6MjA4ODM1MTI2OH0.XL7OKT0C0OlX76_mQVcHXsAVXj8cq_mkLgSVJzyH0lc" },
+                          body: JSON.stringify({ dossier_id: d.id })
+                        });
+                        setTimeout(fetchAll, 3000);
+                      } catch (_) {} finally { setPresLoading(null); }
+                    }} style={{ background: isGen ? "rgba(255,255,255,0.03)" : "linear-gradient(135deg, #ffc86b, " + V.accent2 + ")", border: "none", borderRadius: 12, padding: "10px 16px", color: isGen ? V.muted : "#08101e", cursor: isGen ? "default" : "pointer", fontSize: 13, fontWeight: 700, width: "100%" }}>
+                      {isGen ? "\u23f3 Gerando apresenta\u00e7\u00e3o..." : "\ud83d\udcca Gerar Apresenta\u00e7\u00e3o HTML"}
+                    </button>
+                  )}
+                </div>;
+              })}
+            </div>
+          )}
+        </div>
+      ))}
+
       {tab === "jobs" && <GPanel title={"Jobs (" + jobs.length + ")"} icon="\ud83d\udd04" full><div style={{ overflowX: "auto" }}><table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}><thead><tr style={{ borderBottom: "1px solid rgba(255,255,255,0.08)" }}>{["Status", "Mensagem", "Inten\u00e7\u00e3o", "A\u00e7\u00e3o", "Confian\u00e7a", "Data"].map(h => <th key={h} style={{ padding: "10px 8px", textAlign: "left", color: "rgba(255,255,255,0.35)", fontSize: 11, fontWeight: 700, textTransform: "uppercase" }}>{h}</th>)}</tr></thead><tbody>{jobs.map((j, i) => <tr key={j.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)", animation: "slideIn 0.3s ease " + (i * 0.03) + "s both" }}><td style={{ padding: "10px 8px" }}><SBadge s={j.status} /></td><td style={{ padding: "10px 8px", color: "rgba(255,255,255,0.6)", maxWidth: 250, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{j.user_message ? String(j.user_message).replace(/"/g, "") : "\u2014"}</td><td style={{ padding: "10px 8px", color: "rgba(124,156,255,0.8)", fontWeight: 600 }}>{j.intent || "\u2014"}</td><td style={{ padding: "10px 8px", color: "rgba(255,255,255,0.5)" }}>{j.action || "\u2014"}</td><td style={{ padding: "10px 8px" }}>{j.confidence ? <span style={{ fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{Math.round(parseFloat(j.confidence) * 100)}%</span> : "\u2014"}</td><td style={{ padding: "10px 8px", color: "rgba(255,255,255,0.35)", fontSize: 11 }}>{fmtDate(j.created_at)}</td></tr>)}</tbody></table></div></GPanel>}
 
       {/* TASKS */}
