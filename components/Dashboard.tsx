@@ -20,8 +20,8 @@ interface AuditEvent { id: string; status: string; message: string; created_at: 
 interface RSource { title: string; url: string; source_platform: string; relevance_score: number; upvotes: number; comments_count: number; author: string; content_snippet: string; source_layer?: string; source_strength?: string; evidence_type?: string; confirmation_degree?: string; independence?: boolean; potential_bias?: string; observations?: string; }
 interface RConflict { conflict_point: string; source_a: string; source_b: string; explanation: string; impact_on_conclusion: string; }
 interface DossierSrc { title: string; url: string; key_claim: string; fills_gap: string; }
-interface DossierData { id: string; title: string; status: string; executive_summary: string|null; overview: string|null; context_history: string|null; current_state: string|null; detailed_analysis: string|null; perspectives: any; key_findings: any; convergences: any; divergences: any; gaps_limitations: string|null; practical_implications: string|null; strategic_dimensions: string|null; future_trends: string|null; conclusion: string|null; confidence: string|null; confidence_why: string|null; sources_analyzed: number; new_sources_found: number; vertentes_covered: number; coverage_score: any; processing_log: any; created_at: string; updated_at: string; original_research: any; original_sources: any; new_sources: DossierSrc[]; }
-interface RReport { id: string; topic: string; summary: string|null; executive_summary: string|null; main_answer: string|null; full_report: string|null; conflicts: string|null; timeline: string|null; next_searches: string|null; sources_count: number; status: string; mode: string|null; confidence: string|null; search_contract: any; self_evaluation: any; created_at: string; sources: RSource[]|null; conflict_details: RConflict[]|null; }
+interface DossierData { id: string; title: string; status: string; executive_summary: string|null; overview: string|null; context_history: string|null; current_state: string|null; detailed_analysis: string|null; perspectives: any; key_findings: any; convergences: any; divergences: any; gaps_limitations: string|null; practical_implications: string|null; strategic_dimensions: string|null; future_trends: string|null; conclusion: string|null; confidence: string|null; confidence_why: string|null; sources_analyzed: number; new_sources_found: number; vertentes_covered: number; coverage_score: any; processing_log: any; swot_analysis?: any; created_at: string; updated_at: string; original_research: any; original_sources: any; new_sources: DossierSrc[]; }
+interface RReport { id: string; topic: string; summary: string|null; executive_summary: string|null; main_answer: string|null; full_report: string|null; conflicts: string|null; timeline: string|null; next_searches: string|null; sources_count: number; status: string; mode: string|null; confidence: string|null; search_contract: any; self_evaluation: any; created_at: string; sources: RSource[]|null; conflict_details: RConflict[]|null; swot_analysis?: any; }
 
 // ============================================================
 // HELPERS
@@ -77,6 +77,71 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
 }
 
 function GPanel({ title, icon, children, full = false }: { title: string; icon: string; children: React.ReactNode; full?: boolean }) {
+
+// SWOT COMPONENT
+function SwotSection({ swot }: { swot: any }) {
+  if (!swot || !swot.applicable) return null;
+  const qColors: Record<string, { bg: string; border: string; icon: string; label: string }> = {
+    s: { bg: "rgba(111,226,163,0.08)", border: "rgba(111,226,163,0.2)", icon: "\ud83d\udfe2", label: "For\u00e7as (Strengths)" },
+    w: { bg: "rgba(255,125,125,0.08)", border: "rgba(255,125,125,0.2)", icon: "\ud83d\udd34", label: "Fraquezas (Weaknesses)" },
+    o: { bg: "rgba(255,200,107,0.08)", border: "rgba(255,200,107,0.2)", icon: "\ud83d\udfe1", label: "Oportunidades (Opportunities)" },
+    t: { bg: "rgba(124,156,255,0.08)", border: "rgba(124,156,255,0.2)", icon: "\u26a0\ufe0f", label: "Amea\u00e7as (Threats)" },
+  };
+  const crossLabels: Record<string, { icon: string; label: string; desc: string }> = {
+    fo: { icon: "\ud83d\udfe2\ud83d\udfe1", label: "FO", desc: "For\u00e7as \u00d7 Oportunidades" },
+    fa: { icon: "\ud83d\udfe2\u26a0\ufe0f", label: "FA", desc: "For\u00e7as \u00d7 Amea\u00e7as" },
+    do: { icon: "\ud83d\udd34\ud83d\udfe1", label: "DO", desc: "Fraquezas \u00d7 Oportunidades" },
+    da: { icon: "\ud83d\udd34\u26a0\ufe0f", label: "DA", desc: "Fraquezas \u00d7 Amea\u00e7as" },
+  };
+  return (
+    <Card style={{ marginBottom: 18, border: "1px solid rgba(124,156,255,0.2)", background: "linear-gradient(180deg, rgba(124,156,255,0.04), rgba(255,255,255,0.03))" }}>
+      <h3 style={{ fontSize: 20, fontWeight: 800, margin: "0 0 14px", color: V.text }}>{"\ud83d\udcca"} An\u00e1lise SWOT / FOFA</h3>
+      {swot.context_intro && <p style={{ color: V.muted, lineHeight: 1.7, marginBottom: 18, fontSize: 14 }}>{swot.context_intro}</p>}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 18 }}>
+        {[["s", swot.strengths], ["w", swot.weaknesses], ["o", swot.opportunities], ["t", swot.threats]].map(([key, items]) => {
+          const c = qColors[key as string];
+          return (
+            <div key={key as string} style={{ borderRadius: 16, border: "1px solid " + c.border, background: c.bg, padding: "16px 18px" }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, color: V.text }}>{c.icon} {c.label}</div>
+              {(items as any[] || []).map((item: any, i: number) => (
+                <div key={i} style={{ marginBottom: 8, fontSize: 13 }}>
+                  <strong style={{ color: V.text }}>{item.item}</strong>
+                  {item.evidence && <div style={{ color: V.muted, fontSize: 12, marginTop: 2 }}>{item.evidence}</div>}
+                </div>
+              ))}
+              {(!items || !(items as any[]).length) && <div style={{ color: V.muted, fontSize: 12 }}>Nenhum identificado</div>}
+            </div>
+          );
+        })}
+      </div>
+      {swot.cross_strategies && (
+        <div style={{ marginBottom: 18 }}>
+          <h4 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 12px", color: V.accent }}>Cruzamento Estrat\u00e9gico</h4>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+            {["fo", "fa", "do", "da"].map(k => {
+              const cl = crossLabels[k]; const items = swot.cross_strategies[k] || [];
+              return (
+                <div key={k} style={{ padding: "12px 14px", borderRadius: 12, border: "1px solid " + V.line, background: "rgba(255,255,255,0.03)" }}>
+                  <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 6 }}>{cl.icon} {cl.label} <span style={{ color: V.muted, fontWeight: 400 }}>({cl.desc})</span></div>
+                  {items.map((item: string, i: number) => <div key={i} style={{ color: V.muted, fontSize: 12, marginBottom: 4 }}>{"\u2022"} {item}</div>)}
+                  {!items.length && <div style={{ color: "rgba(255,255,255,0.15)", fontSize: 12 }}>\u2014</div>}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+      {swot.action_plan && swot.action_plan.length > 0 && (
+        <div>
+          <h4 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 10px", color: V.accent2 }}>{"\u27a1\ufe0f"} Plano de A\u00e7\u00e3o</h4>
+          {swot.action_plan.map((a: string, i: number) => (
+            <div key={i} style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid rgba(78,227,193,0.2)", background: "rgba(78,227,193,0.06)", marginBottom: 8, color: V.text, fontSize: 14 }}>{(i+1)}. {a}</div>
+          ))}
+        </div>
+      )}
+    </Card>
+  );
+}
   return <div style={{ background: "rgba(255,255,255,0.02)", backdropFilter: "blur(20px)", border: "1px solid " + V.line, borderRadius: 20, overflow: "hidden" }}>
     <div style={{ padding: "16px 22px", borderBottom: "1px solid " + V.line, display: "flex", alignItems: "center", gap: 10 }}>
       <span style={{ fontSize: 18 }}>{icon}</span>
@@ -227,6 +292,9 @@ function Dossier({ r, onBack }: { r: RReport; onBack: () => void }) {
         {nextS.length > 0 ? nextS.map((n, i) => <div key={i} style={{ padding: "10px 14px", borderRadius: 14, border: "1px solid " + V.line, background: "rgba(124,156,255,0.08)", color: "#dbe5ff", fontSize: 14, marginBottom: 8 }}>\u27a1\ufe0f {n}</div>) : <p style={{ color: V.muted }}>Nenhuma recomendada.</p>}
       </Card>
     </div>
+
+    {/* SWOT */}
+    <SwotSection swot={r.swot_analysis} />
 
     {/* FOOTER */}
     <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid " + V.line, borderRadius: 20, padding: "18px 20px", color: V.muted, fontSize: 14, marginBottom: 40 }}>
@@ -439,6 +507,8 @@ export default function Dashboard() {
               {selDossier.confidence_why && <p style={{ color: V.muted, marginTop: 12, fontSize: 14 }}>{selDossier.confidence_why}</p>}
             </Card>
           )}
+          {/* SWOT */}
+          <SwotSection swot={selDossier.swot_analysis} />
           {/* SOURCES */}
           {(selDossier.new_sources || []).length > 0 && (
             <Card style={{ marginBottom: 18 }}><h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 14px" }}>Fontes de Expans\u00e3o ({selDossier.new_sources.length})</h3>
