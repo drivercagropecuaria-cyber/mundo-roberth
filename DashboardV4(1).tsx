@@ -76,8 +76,6 @@ function Card({ children, style = {} }: { children: React.ReactNode; style?: Rea
   return <div style={{ background: V.card, border: "1px solid " + V.line, borderRadius: V.radius, padding: 22, boxShadow: V.shadow, ...style }}>{children}</div>;
 }
 
-function GPanel({ title, icon, children, full = false }: { title: string; icon: string; children: React.ReactNode; full?: boolean }) {
-
 // SWOT COMPONENT
 function SwotSection({ swot }: { swot: any }) {
   if (!swot || !swot.applicable) return null;
@@ -142,6 +140,8 @@ function SwotSection({ swot }: { swot: any }) {
     </Card>
   );
 }
+
+function GPanel({ title, icon, children, full = false }: { title: string; icon: string; children: React.ReactNode; full?: boolean }) {
   return <div style={{ background: "rgba(255,255,255,0.02)", backdropFilter: "blur(20px)", border: "1px solid " + V.line, borderRadius: 20, overflow: "hidden" }}>
     <div style={{ padding: "16px 22px", borderBottom: "1px solid " + V.line, display: "flex", alignItems: "center", gap: 10 }}>
       <span style={{ fontSize: 18 }}>{icon}</span>
