@@ -300,8 +300,6 @@ function Dossier({ r, onBack }: { r: RReport; onBack: () => void }) {
             {s.content_snippet && <div style={{ color: V.muted, fontSize: 13 }}>{s.content_snippet.substring(0, 180)}</div>}
           </div>;
         })}
-          </div>;
-        })}
       </Card>
       {conf_.length > 0 && <Card><h3 style={{ fontSize: 18, fontWeight: 700, margin: "0 0 14px", color: V.danger }}>Conflitos</h3>
         {conf_.map((c, i) => <div key={i} style={{ padding: "14px 16px", borderRadius: 16, background: "rgba(255,125,125,0.06)", border: "1px solid rgba(255,125,125,0.15)", marginBottom: 10 }}>
